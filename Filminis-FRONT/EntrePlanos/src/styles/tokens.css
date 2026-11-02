@@ -1,0 +1,28 @@
+:root {
+  --color-bg: #191919;
+  --color-surface: #292929;
+  --color-text: #faf8f4;
+  --color-muted: #c2bfba;
+  --color-accent: #a83f35;
+  --color-highlight: #e7b66d;
+  --color-border: #aaa7a3;
+  --color-success: #027a48;
+  --color-error: #b42318;
+  --radius: 4px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 16px;
+  --space-4: 24px;
+  --space-5: 32px;
+  --space-6: 64px;
+  --page-gutter: clamp(16px, 4.45vw, 64px);
+  --font-body: "Google Sans Flex", Arial, sans-serif;
+  --font-brand: Antonio, Impact, "Arial Narrow", sans-serif;
+  color-scheme: dark;
+  font-family: var(--font-body);
+  color: var(--color-text);
+  background: var(--color-bg);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
