@@ -1,0 +1,7 @@
+/FILMESERVER/api/__pycache__
+/FILMESERVER/infra/__pycache__
+*.pyc
+.env
+.env.local
+venv/
+__pycache__

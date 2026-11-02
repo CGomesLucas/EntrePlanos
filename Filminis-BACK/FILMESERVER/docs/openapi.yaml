@@ -1,0 +1,1168 @@
+openapi: 3.0.0
+
+info:
+  title: Filminis API
+  version: 2.0.0
+
+  description: |
+    # Filminis API
+
+    API REST para gerenciamento colaborativo de filmes.
+    
+    A plataforma permite que usuários autenticados contribuam
+    com o catálogo cadastrando filmes, atores, diretores,
+    categorias, produtoras, linguagens e países.
+
+    ---
+
+    ## Autenticação
+
+    A API utiliza JWT Bearer Token.
+
+    Os endpoints protegidos exigem:
+
+    Authorization: Bearer <token>
+
+    ---
+
+    ## Permissões
+
+    ### Usuário
+
+    Pode:
+
+    - Cadastrar filmes
+    - Cadastrar atores
+    - Cadastrar diretores
+    - Cadastrar categorias
+    - Cadastrar produtoras
+    - Cadastrar linguagens
+    - Cadastrar países
+
+    ### Administrador
+
+    Possui todas as permissões de usuário e também pode:
+
+    - Aprovar filmes
+    - Editar filmes
+    - Excluir filmes
+    - Editar atores
+    - Excluir atores
+    - Editar diretores
+    - Excluir diretores
+    - Alterar roles de usuários
+
+    ---
+
+    ## Fluxo de Aprovação
+
+    Quando um usuário comum cadastra um filme:
+
+    istatus = pendente
+
+    Quando um administrador cadastra um filme:
+
+    istatus = aprovado
+
+    Filmes pendentes devem ser aprovados por um administrador.
+
+    ## Como testar a API
+
+    Passo 1:
+    Faça login em:
+    POST /send_loginho
+
+    Passo 2:
+    Copie o valor retornado em:
+    access_token
+
+    Passo 3:
+    Clique em "Authorize"
+
+    Passo 4:
+    Cole o token JWT
+
+    Passo 5:
+    Execute os endpoints protegidos.
+    ---
+
+    ## Usuários de teste
+
+    Administrador
+
+    email: admin@example.com
+    password: admin
+
+    Usuário comum
+
+    email: usuario@mail.com
+    password: 123456
+
+servers:
+  - url: http://localhost:8000
+
+tags:
+
+  - name: Autenticação
+    description: Login, logout e renovação de tokens.
+
+  - name: Usuários
+    description: Operações relacionadas aos usuários.
+
+  - name: Filmes
+    description: Cadastro, edição, aprovação e consulta de filmes.
+
+  - name: Atores
+    description: Cadastro, edição e consulta de atores.
+
+  - name: Diretores
+    description: Cadastro, edição e consulta de diretores.
+
+  - name: Dados Auxiliares
+    description: Categorias, produtoras, linguagens e países.
+
+components:
+
+  schemas:
+
+  securitySchemes:
+
+    bearerAuth:
+
+      type: http
+
+      scheme: bearer
+
+      bearerFormat: JWT
+
+      description: |
+        ## Como autenticar
+
+        1. Faça login utilizando:
+
+           POST /send_loginho
+
+        2. Copie o valor retornado em:
+
+           access_token
+
+        Exemplo:
+
+        {
+          "access_token": "eyJhbGciOi..."
+        }
+
+        3. Clique no botão "Authorize" no topo do Swagger.
+
+        4. Cole apenas o token.
+
+        Exemplo:
+
+        eyJhbGciOi...
+
+        Não é necessário escrever:
+
+        Bearer eyJhbGciOi...
+
+        O Swagger adiciona automaticamente o prefixo Bearer.
+
+
+
+paths:
+  /send_loginho:
+
+    post:
+
+      tags:
+        - Autenticação
+
+      summary: Login
+
+      description: |
+
+        Realiza autenticação do usuário.
+
+        Utilize as credenciais cadastradas no sistema.
+
+        Exemplo de administrador:
+
+        email: admin@example.com
+        password: admin
+
+        Exemplo de usuário comum:
+
+        email: usuario@mail.com
+        password: 123456
+
+        O retorno contém dois tokens:
+
+        - access_token
+        - refresh_token
+
+        O access_token deve ser utilizado nos endpoints protegidos.
+
+      requestBody:
+        required: true
+
+        content:
+
+          application/x-www-form-urlencoded:
+
+            schema:
+
+              type: object
+
+              required:
+                - email
+                - password
+
+              properties:
+
+                email:
+                  type: string
+
+                password:
+                  type: string
+
+            example:
+
+              email: admin@example.com
+              password: admin
+
+      responses:
+
+        '200':
+
+          description: Login realizado com sucesso
+
+          content:
+
+            application/json:
+
+              example:
+
+                access_token: jwt...
+                refresh_token: jwt...
+
+        '401':
+          description: Credenciais inválidas
+
+  /cadastrani:
+
+    post:
+
+      tags:
+        - Filmes
+
+      summary: Criar filme
+
+      description: |
+        Cria um novo filme.
+
+        Usuários comuns:
+
+        - filme criado como pendente
+
+        Administradores:
+
+        - filme criado como aprovado
+
+        Todos os relacionamentos são criados automaticamente.
+
+      security:
+        - bearerAuth: []
+
+      requestBody:
+
+        required: true
+
+        content:
+
+          application/json:
+
+            example:
+
+              titulo: "Interstellar"
+              ano: 2014
+              duracao: "02:49"
+
+              sinopse: "Filme de ficção científica"
+
+              imagem: "https://site.com/poster.jpg"
+
+              orcamento: "R$ 165.000.000"
+
+              categoria_id:
+                - 1
+
+              diretor_id:
+                - 1
+
+              atores_ids:
+                - 1
+                - 2
+
+              produtora_id:
+                - 1
+
+              linguagem_id:
+                - 1
+
+              pais_origem_id:
+                - 1
+
+      responses:
+
+        '201':
+
+          description: Filme criado
+
+          content:
+
+            application/json:
+
+              example:
+
+                id: 101
+
+                status: pendente
+
+                message: Filme enviado para aprovação
+
+        '401':
+
+          description: Token inválido ou ausente
+
+  /me:
+
+    get:
+
+      tags:
+        - Usuários
+
+      summary: Retornar usuário autenticado
+
+      description: |
+        Retorna os dados do usuário atualmente autenticado.
+
+        É necessário enviar um JWT válido.
+
+      security:
+        - bearerAuth: []
+
+      responses:
+
+        '200':
+
+          description: Dados do usuário
+
+        '401':
+
+          description: Token inválido ou ausente
+
+    patch:
+
+      tags:
+        - Usuários
+
+      summary: Atualizar perfil
+
+      description: |
+        Permite que o próprio usuário atualize seus dados.
+
+        Campos comuns:
+
+        - nome
+        - sobrenome
+        - apelido
+        - foto
+
+      security:
+        - bearerAuth: []
+
+      requestBody:
+
+        content:
+
+          application/json:
+
+            example:
+
+              nome: "Mariany"
+              apelido: "mary"
+
+      responses:
+
+        '200':
+
+          description: Perfil atualizado
+
+        '401':
+
+          description: Token inválido ou ausente
+
+  /usuarios:
+
+    get:
+
+      tags:
+        - Usuários
+
+      summary: Listar usuários
+
+      description: |
+        Retorna todos os usuários cadastrados.
+
+        Apenas administradores devem acessar este endpoint.
+
+      security:
+        - bearerAuth: []
+
+      responses:
+
+        '200':
+
+          description: Lista de usuários
+
+        '401':
+
+          description: Token inválido
+
+        '403':
+
+          description: Apenas administradores
+  
+    /user/role:
+
+    patch:
+
+      tags:
+        - Usuários
+
+      summary: Alterar role de usuário
+
+      description: |
+        Altera o papel de um usuário.
+
+        Roles disponíveis:
+
+        - user
+        - admin
+
+        Apenas administradores podem executar esta operação.
+
+      security:
+        - bearerAuth: []
+
+      parameters:
+
+        - in: query
+
+          name: id
+
+          required: true
+
+          description: ID do usuário
+
+          schema:
+            type: integer
+
+      requestBody:
+
+        required: true
+
+        content:
+
+          application/json:
+
+            example:
+
+              role: admin
+
+      responses:
+
+        '200':
+
+          description: Role atualizada
+
+          content:
+
+            application/json:
+
+              example:
+
+                message: Role atualizada com sucesso
+
+        '401':
+
+          description: Token inválido
+
+        '403':
+
+          description: Apenas administradores
+
+        '404':
+
+          description: Usuário não encontrado
+
+  /filme:
+
+    get:
+
+      tags:
+        - Filmes
+
+      summary: Buscar filme por ID
+
+      description: |
+        Retorna os detalhes completos
+        de um filme.
+
+      parameters:
+
+        - in: query
+
+          name: id
+
+          required: true
+
+          description: ID do filme
+
+          schema:
+            type: integer
+
+      responses:
+
+        '200':
+          description: Filme encontrado
+
+        '404':
+          description: Filme não encontrado
+
+    patch:
+
+      tags:
+        - Filmes
+
+      summary: Editar filme
+
+      description: |
+        Atualiza parcialmente um filme.
+
+        Apenas administradores podem utilizar.
+
+        Campos são opcionais.
+
+        Somente os campos enviados serão alterados.
+
+      security:
+        - bearerAuth: []
+
+      parameters:
+
+        - in: query
+
+          name: id
+
+          required: true
+
+          schema:
+            type: integer
+
+      requestBody:
+
+        content:
+
+          application/json:
+
+            example:
+
+              titulo: "Novo Título"
+
+              imagem: "https://novo-poster.jpg"
+
+              atores:
+                - 1
+                - 2
+
+              diretores:
+                - 1
+
+              categorias:
+                - 2
+
+      responses:
+
+        '200':
+          description: Filme atualizado
+
+        '401':
+          description: Token inválido
+
+        '403':
+          description: Apenas administradores
+
+        '404':
+          description: Filme não encontrado
+
+  /atores:
+
+    get:
+
+      tags:
+        - Atores
+
+      summary: Listar atores
+
+      description: |
+        Retorna todos os atores cadastrados.
+
+      responses:
+
+        '200':
+          description: Lista de atores
+
+  /ator:
+
+    get:
+
+      tags:
+        - Atores
+
+      summary: Buscar ator por ID
+
+      description: |
+        Retorna um ator específico.
+
+      parameters:
+
+        - in: query
+          name: id
+          required: true
+
+          schema:
+            type: integer
+
+      responses:
+
+        '200':
+          description: Ator encontrado
+
+        '404':
+          description: Ator não encontrado
+
+    patch:
+
+      tags:
+        - Atores
+
+      summary: Editar ator
+
+      description: |
+        Atualiza parcialmente um ator.
+
+        Apenas administradores podem utilizar.
+
+      security:
+        - bearerAuth: []
+
+      parameters:
+
+        - in: query
+          name: id
+          required: true
+          schema:
+            type: integer
+
+      requestBody:
+
+        content:
+
+          application/json:
+
+            example:
+
+              nome: "Tom"
+              sobrenome: "Hardy"
+
+              foto: "https://imagem.com/tom.jpg"
+
+              id_genero: 1
+
+      responses:
+
+        '200':
+          description: Ator atualizado
+
+        '401':
+          description: Token inválido
+
+        '403':
+          description: Apenas administradores
+
+        '404':
+          description: Ator não encontrado
+
+
+  /diretores:
+
+    get:
+
+      tags:
+        - Diretores
+
+      summary: Listar diretores
+
+      description: |
+        Retorna todos os diretores cadastrados no sistema.
+
+        Este endpoint é público.
+
+      responses:
+
+        '200':
+
+          description: Lista de diretores retornada com sucesso
+
+  /diretor:
+
+    get:
+
+      tags:
+        - Diretores
+
+      summary: Buscar diretor por ID
+
+      description: |
+        Retorna os dados de um diretor específico.
+
+        Exemplo:
+
+        GET /diretor?id=12
+
+      parameters:
+
+        - in: query
+          name: id
+          required: true
+
+          description: ID do diretor.
+
+          schema:
+            type: integer
+
+      responses:
+
+        '200':
+
+          description: Diretor encontrado
+
+          content:
+
+            application/json:
+
+              example:
+
+                id: 12
+                nome: Denis
+                sobrenome: Villeneuve
+                foto: https://imagem.com/denis.jpg
+                id_genero: 1
+
+        '404':
+
+          description: Diretor não encontrado
+
+    patch:
+
+      tags:
+        - Diretores
+
+      summary: Editar diretor
+
+      description: |
+        Atualiza parcialmente um diretor.
+
+        Apenas administradores podem utilizar este endpoint.
+
+        É possível alterar:
+
+        - nome
+        - sobrenome
+        - foto
+        - id_genero
+
+      security:
+        - bearerAuth: []
+
+      parameters:
+
+        - in: query
+          name: id
+          required: true
+
+          description: ID do diretor.
+
+          schema:
+            type: integer
+
+      requestBody:
+
+        content:
+
+          application/json:
+
+            example:
+
+              nome: Denis
+              sobrenome: Villeneuve Editado
+              foto: https://imagem.com/nova-foto.jpg
+              id_genero: 1
+
+      responses:
+
+        '200':
+
+          description: Diretor atualizado
+
+          content:
+
+            application/json:
+
+              example:
+                message: Diretor atualizado com sucesso
+
+        '401':
+          description: Token inválido ou ausente
+
+        '403':
+          description: Apenas administradores
+
+        '404':
+          description: Diretor não encontrado
+
+
+  /addCat:
+
+    post:
+
+      tags:
+        - Dados Auxiliares
+
+      summary: Criar ator, diretor, categoria, produtora, país ou linguagem
+
+      description: |
+        Endpoint genérico utilizado para criação dos dados auxiliares do sistema.
+
+        O campo "cat" determina qual entidade será criada.
+
+        Valores aceitos:
+
+        - Atores Principais
+        - Diretores
+        - Categorias
+        - Produtora
+        - Linguagem
+        - País de Origem
+
+        Apenas usuários autenticados podem utilizar este endpoint.
+
+      security:
+        - bearerAuth: []
+
+      requestBody:
+
+        required: true
+
+        content:
+
+          application/x-www-form-urlencoded:
+
+            schema:
+
+              type: object
+
+              properties:
+
+                cat:
+                  type: string
+
+                nome:
+                  type: string
+
+                genero:
+                  type: integer
+
+                foto:
+                  type: string
+
+            examples:
+
+              ator:
+
+                summary: Cadastro de ator
+
+                value:
+
+                  cat: Atores Principais
+                  nome: Tom Hardy
+                  genero: 1
+                  foto: https://imagem.com/tom.jpg
+
+              diretor:
+
+                summary: Cadastro de diretor
+
+                value:
+
+                  cat: Diretores
+                  nome: Denis Villeneuve
+                  genero: 1
+                  foto: https://imagem.com/denis.jpg
+
+              categoria:
+
+                summary: Cadastro de categoria
+
+                value:
+
+                  cat: Categorias
+                  nome: Ficção Científica
+
+              produtora:
+
+                summary: Cadastro de produtora
+
+                value:
+
+                  cat: Produtora
+                  nome: Warner Bros
+
+      responses:
+
+        '200':
+
+          description: Registro criado com sucesso
+
+        '401':
+
+          description: Usuário não autenticado
+
+
+  /filmes-pendentes:
+
+    get:
+
+      tags:
+        - Filmes
+
+      summary: Listar filmes pendentes
+
+      description: |
+        Retorna todos os filmes que aguardam aprovação.
+
+        Apenas administradores possuem acesso.
+
+        Utilizado no fluxo de moderação.
+
+      security:
+        - bearerAuth: []
+
+      responses:
+
+        '200':
+
+          description: Lista de filmes pendentes
+
+        '401':
+
+          description: Token inválido
+
+        '403':
+
+          description: Apenas administradores
+
+  /aprovafilme:
+
+    put:
+
+      tags:
+        - Filmes
+
+      summary: Aprovar filme
+
+      description: |
+        Aprova um filme pendente.
+
+        Quando aprovado:
+
+        istatus = aprovado
+
+        Apenas administradores podem utilizar este endpoint.
+
+      security:
+        - bearerAuth: []
+
+      parameters:
+
+        - in: query
+
+          name: id
+
+          required: true
+
+          description: ID do filme a ser aprovado
+
+          schema:
+            type: integer
+
+      responses:
+
+        '200':
+
+          description: Filme aprovado com sucesso
+
+          content:
+
+            application/json:
+
+              example:
+                message: Filme aprovado com sucesso
+
+        '401':
+
+          description: Token inválido
+
+        '403':
+
+          description: Apenas administradores
+
+        '404':
+
+          description: Filme não encontrado
+
+  components:
+
+  schemas:
+
+    Ator:
+
+      type: object
+
+      properties:
+
+        id:
+          type: integer
+
+        nome:
+          type: string
+
+        sobrenome:
+          type: string
+
+        foto:
+          type: string
+
+        id_genero:
+          type: integer
+
+    Diretor:
+
+      type: object
+
+      properties:
+
+        id:
+          type: integer
+
+        nome:
+          type: string
+
+        sobrenome:
+          type: string
+
+        foto:
+          type: string
+
+        id_genero:
+          type: integer
+
+    Filme:
+
+      type: object
+
+      properties:
+
+        id:
+          type: integer
+
+        titulo:
+          type: string
+
+        ano:
+          type: integer
+
+        duracao:
+          type: string
+
+        sinopse:
+          type: string
+
+        orcamento:
+          type: number
+
+        poster:
+          type: string
+
+        istatus:
+
+          type: string
+
+          enum:
+            - pendente
+            - aprovado
+
+    Usuario:
+
+      type: object
+
+      properties:
+
+        id:
+          type: integer
+
+        nome:
+          type: string
+
+        sobrenome:
+          type: string
+
+        apelido:
+          type: string
+
+        email:
+          type: string
+
+        role:
+          type: string
+
+
+  securitySchemes:
+
+    bearerAuth:
+
+      type: http
+
+      scheme: bearer
+
+      bearerFormat: JWT
+
+      description: |
+        Utilize o token JWT obtido no endpoint:
+
+        POST /send_loginho
+
+        Exemplo:
+
+        Authorization: Bearer eyJhbGciOi...
+
